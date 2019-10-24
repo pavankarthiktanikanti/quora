@@ -11,6 +11,14 @@ import org.springframework.web.context.request.WebRequest;
 @ControllerAdvice
 public class RestExceptionHandler {
 
+    /**
+     * Global Exception handler for Sign up Failures
+     * Handles the exception and sends back the user/client a user friendly message along with HTTP Status code
+     *
+     * @param exe     The Exception occured in the application
+     * @param request The web request information if any to be used while framing the response
+     * @return The Error Response consisting of the Http status code and an error message
+     */
     @ExceptionHandler(SignUpRestrictedException.class)
     public ResponseEntity<ErrorResponse> signUpRestrictedException(SignUpRestrictedException exe, WebRequest request) {
         return new ResponseEntity<ErrorResponse>(
