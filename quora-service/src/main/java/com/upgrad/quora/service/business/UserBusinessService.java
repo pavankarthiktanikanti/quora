@@ -12,7 +12,6 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
 
 @Service
 public class UserBusinessService {
@@ -60,15 +59,28 @@ public class UserBusinessService {
     @Transactional(propagation = Propagation.REQUIRED)
     public String getUserUUID(String authorization) throws SignOutRestrictedException {
         String[] bearerToken = authorization.split(QuoraUtil.BEARER_TOKEN);
-        if(bearerToken != null && bearerToken.length > 1) {
-            UserAuthEntity userAuthEntity = userDao.getUserAuthToken(bearerToken[1]);
-            if (isUserSessionValid(userAuthEntity)) {
-                userAuthEntity.setLogoutAt(ZonedDateTime.now());
-                userDao.updateUserAuthEntity(userAuthEntity);
-                return userAuthEntity.getUuid();
-            }
+        // If Bearer Token prefix is missed, ignore and just use the authorization text
+        if (bearerToken != null && bearerToken.length > 1) {
+            authorization = bearerToken[1];
+        }
+        UserAuthEntity userAuthEntity = userDao.getUserAuthToken(authorization);
+        if (isUserSessionValid(userAuthEntity)) {
+            userAuthEntity.setLogoutAt(ZonedDateTime.now());
+            userDao.updateUserAuthEntity(userAuthEntity);
+            return userAuthEntity.getUuid();
         }
         throw new SignOutRestrictedException("SGR-001", "User is not Signed in");
+    }
+
+    /**
+     * This method checks if the user session is active based on the access token/logout at time
+     *
+     * @param userAuthEntity The authentication Entity object holding the information about user login and access token
+     * @return true if the token exists in the DB and user is not logged out, false otherwise
+     */
+    public Boolean isUserSessionValid(UserAuthEntity userAuthEntity) {
+        // userAuthEntity will be non null only if token exists in DB, and logoutAt null indicates user has not logged out yet
+        return (userAuthEntity != null && userAuthEntity.getLogoutAt() == null);
     }
 
     /**
@@ -79,7 +91,7 @@ public class UserBusinessService {
      *
      * @param userAuthEntity The authentication Entity object holding the information about user login and access token
      * @return true if all session conditions satisfy, false otherwise
-     */
+
     public Boolean isUserSessionValid(UserAuthEntity userAuthEntity) {
         if (userAuthEntity != null && userAuthEntity.getLogoutAt() == null
                 && userAuthEntity.getExpiresAt() != null) {
@@ -90,5 +102,6 @@ public class UserBusinessService {
         }
         // Token expired or user already logged out or user never signed in before(may also be the case of invalid token)
         return false;
-    }
+    }*/
+
 }
