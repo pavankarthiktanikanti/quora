@@ -3,6 +3,7 @@ package com.upgrad.quora.service.business;
 import com.upgrad.quora.service.dao.UserDao;
 import com.upgrad.quora.service.entity.User;
 import com.upgrad.quora.service.entity.UserAuthEntity;
+import com.upgrad.quora.service.exception.AuthorizationFailedException;
 import com.upgrad.quora.service.exception.SignOutRestrictedException;
 import com.upgrad.quora.service.exception.SignUpRestrictedException;
 import com.upgrad.quora.service.util.QuoraUtil;
@@ -81,6 +82,32 @@ public class UserBusinessService {
     public Boolean isUserSessionValid(UserAuthEntity userAuthEntity) {
         // userAuthEntity will be non null only if token exists in DB, and logoutAt null indicates user has not logged out yet
         return (userAuthEntity != null && userAuthEntity.getLogoutAt() == null);
+    }
+
+    /**
+     * This method validates the authorization access token passed while accessing the apis after signing in
+     * Handles the token both with/without Bearer prefix in the authorization token
+     *
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return The userAuthEntity based on the matched authorization
+     * @throws AuthorizationFailedException if the token is not present in DB or user already logged out
+     */
+    public UserAuthEntity validateUserAuthentication(String authorization) throws AuthorizationFailedException {
+        String[] bearerToken = authorization.split(QuoraUtil.BEARER_TOKEN);
+        // If Bearer Token prefix is missed, ignore and just use the authorization text
+        if (bearerToken != null && bearerToken.length > 1) {
+            authorization = bearerToken[1];
+        }
+        UserAuthEntity userAuthEntity = userDao.getUserAuthToken(authorization);
+        // Token is not matched with the database records
+        if (userAuthEntity == null) {
+            throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
+        }
+        // Token matches, but the user has already logged out
+        if (userAuthEntity.getLogoutAt() != null) {
+            throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to post a question");
+        }
+        return userAuthEntity;
     }
 
     /**
