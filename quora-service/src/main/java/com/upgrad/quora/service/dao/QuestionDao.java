@@ -22,5 +22,34 @@ public class QuestionDao {
         final List<Question> allQuestions = entityManager.createQuery("select q from Question q", Question.class).getResultList();
         return allQuestions;
     }
+    
+    // Retrieves question by uuid in the Database Question Table and returns in form of singleResult.
+    public Question getQuestionByUUID(String questionUUID) {
+        try {
+            return entityManager.createNamedQuery("questionByUUID", Question.class).setParameter("uuid", questionUUID).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
+    
+    // Edit Question method (JPA merge state)
+    @Transactional
+    public Question editquestion(Question question){
+        entityManager.merge(question);
+        return question;
+    }
+    
+    // To get User Authorization Token
+    public UserAuthEntity getUserAuthToken(final String authorization) {
+        try {
+            return entityManager.createNamedQuery("userAuthTokenByAccessToken", UserAuthEntity.class).setParameter("accessToken", authorization).getSingleResult();
+        } catch (NoResultException nre) {
+
+            return null;
+        }
+
+    }
+    
+    
 
 }
