@@ -131,7 +131,7 @@ public class UserBusinessService {
         return false;
     }*/
     
-    // Method to get User Details from the database.
+    // Method to get User Details via checking AuthToken and user id.
     public User getUser(final String userUuid, final String authorization) throws AuthorizationFailedException, UserNotFoundException {
         UserAuthEntity userAuthEntity = userDao.getUserAuthToken(authorization);
         if(userAuthEntity != null){
