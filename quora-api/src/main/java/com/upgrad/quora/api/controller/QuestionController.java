@@ -54,4 +54,26 @@ public class QuestionController {
         }
         return new ResponseEntity<List<QuestionDetailsResponse>>(allQuesDetailsResponse, HttpStatus.OK);
     }
+    
+    /**
+     * This method is used to edit a question that has been posted by a user. Note, only the owner of the 
+     * question can edit the question.
+     * @param questionId for the question which needs to be edited.
+     * @param authorization holds the Bearer access token for authenticating the user.
+     * @return uuid of the edited question and message 'QUESTION EDITED' in the JSON response with the corresponding HTTP status.
+     * @throws AuthorizationFailedException : if access token does not exit : if user has signed out : if non-owner tries to edit
+     * @throws InvalidQuestionException : if question with uuid which is to be edited does not exist in the database
+     */
+    @RequestMapping(method = RequestMethod.PUT, path = "/question/edit/{questionId}")
+    public ResponseEntity<QuestionEditResponse> EditQuestionContent(
+            @PathVariable("questionId") final String questionId,
+            @RequestHeader("authorization") final String authorization,
+            final QuestionEditRequest questionEditRequest)
+            throws InvalidQuestionException, AuthorizationFailedException{
+            final Question question = new Question();
+            question.setContent(questionEditRequest.getContent());
+            final Question editquestionEntity = questionBusinessService.EditQuestionContent(question,questionId,authorization);
+            QuestionEditResponse questionEditResponse = new QuestionEditResponse().id(editquestionEntity.getUuid()).status("QUESTION EDITED");
+            return new ResponseEntity<QuestionEditResponse>(questionEditResponse, HttpStatus.OK);
+    }
 }
