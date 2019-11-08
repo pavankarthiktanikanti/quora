@@ -65,15 +65,15 @@ public class QuestionController {
      * @throws InvalidQuestionException : if question with uuid which is to be edited does not exist in the database
      */
     @RequestMapping(method = RequestMethod.PUT, path = "/question/edit/{questionId}")
-    public ResponseEntity<QuestionEditResponse> EditQuestionContent(
+    public ResponseEntity<QuestionEditResponse> editQuestionContent(
             @PathVariable("questionId") final String questionId,
             @RequestHeader("authorization") final String authorization,
             final QuestionEditRequest questionEditRequest)
             throws InvalidQuestionException, AuthorizationFailedException{
             final Question question = new Question();
             question.setContent(questionEditRequest.getContent());
-            final Question editquestionEntity = questionBusinessService.EditQuestionContent(question,questionId,authorization);
-            QuestionEditResponse questionEditResponse = new QuestionEditResponse().id(editquestionEntity.getUuid()).status("QUESTION EDITED");
+            final Question editQuestionEntity = questionBusinessService.editQuestionContent(question,questionId,authorization);
+            QuestionEditResponse questionEditResponse = new QuestionEditResponse().id(editQuestionEntity.getUuid()).status("QUESTION EDITED");
             return new ResponseEntity<QuestionEditResponse>(questionEditResponse, HttpStatus.OK);
     }
 }
