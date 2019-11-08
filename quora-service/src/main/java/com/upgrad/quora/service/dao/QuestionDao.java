@@ -34,20 +34,9 @@ public class QuestionDao {
     
     // Edit Question method (JPA merge state)
     @Transactional
-    public Question editquestion(Question question){
+    public Question updateQuestion(Question question){
         entityManager.merge(question);
         return question;
-    }
-    
-    // To get User Authorization Token
-    public UserAuthEntity getUserAuthToken(final String authorization) {
-        try {
-            return entityManager.createNamedQuery("userAuthTokenByAccessToken", UserAuthEntity.class).setParameter("accessToken", authorization).getSingleResult();
-        } catch (NoResultException nre) {
-
-            return null;
-        }
-
     }
     
     
