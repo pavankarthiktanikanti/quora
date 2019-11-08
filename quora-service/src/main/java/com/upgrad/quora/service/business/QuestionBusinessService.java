@@ -31,8 +31,8 @@ public class QuestionBusinessService {
     }
     
     // method to edit question content : checks for all the conditions
-    public Question EditQuestionContent(final Question question,final String questionid, final String authorization) throws AuthorizationFailedException, InvalidQuestionException {
-        UserAuthEntity userAuthEntity = questionDao.getUserAuthToken(authorization);
+    public Question editQuestionContent(final Question question,final String questionid, final String authorization) throws AuthorizationFailedException, InvalidQuestionException {
+            UserAuthEntity userAuthEntity = userDao.getUserAuthToken(authorization);
 
         if(userAuthEntity != null){
             ZonedDateTime logout = userAuthEntity.getLogoutAt();
@@ -59,7 +59,7 @@ public class QuestionBusinessService {
             question.setUuid(Entity.getUuid());
             question.setDate(Entity.getDate());
             question.setUser(Entity.getUser());
-            return questionDao.editquestion(question);
+            return questionDao.updateQuestion(question);
         }
         // If the access token provided by the user does not exist in the database throw 'AuthorizationFailedException'
         throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
