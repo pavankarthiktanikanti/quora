@@ -13,11 +13,10 @@ import com.upgrad.quora.api.model.UserDetailsResponse;
 
 
 /**
- * This method is used to get the details of any user in the Quora Application.
- * Also this method can be accessed by any user in the application.
+ * This endpoint is used to get the details of any user in the Quora Application.
+ * Also this endpoint can be accessed by any user in the application.
  *
  * @return all the details of the user from the database in the JSON response with the corresponding HTTP status.
- *
  */
 
 @RestController
@@ -25,10 +24,10 @@ import com.upgrad.quora.api.model.UserDetailsResponse;
 public class CommonController {
     @Autowired
     private UserBusinessService userBusinessService;
+
     @RequestMapping(method = RequestMethod.GET, path = "/userprofile/{userId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    public ResponseEntity<UserDetailsResponse> getUser(@PathVariable("userId") final String userId, @RequestHeader("authorization") final String authorization) throws AuthorizationFailedException, UserNotFoundException
-    {
-        final User user = userBusinessService.getUser(userId,authorization);
+    public ResponseEntity<UserDetailsResponse> getUser(@PathVariable("userId") final String userId, @RequestHeader("authorization") final String authorization) throws AuthorizationFailedException, UserNotFoundException {
+        final User user = userBusinessService.getUser(userId, authorization);
 
         // mapping all the user details.
 
@@ -43,10 +42,10 @@ public class CommonController {
         userDetailsResponse.contactNumber(user.getContactNumber());
 
         /**
-         *  Returning response with all the details of the user from the database 
+         *  Returning response with all the details of the user from the database
          *  in the JSON response with the corresponding HTTP status.
          */
         return new ResponseEntity<UserDetailsResponse>(userDetailsResponse, HttpStatus.OK);
-        
+
     }
 }
