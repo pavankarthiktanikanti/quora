@@ -127,4 +127,24 @@ public class QuestionController {
         List<Question> allQuestionsByUser = questionBusinessService.getAllQuestionsByUser(userId, authorization);
         return getQuestionDetailsResponse(allQuestionsByUser);
     }
+
+    /**
+     * This method is used to delete the question.
+     * Note, only the owner of the question or admin can delete the question
+     *
+     * @param questionId    It is uuid of the question to be deleted
+     * @param authorization holds the Bearer access token for authenticating the user.
+     * @return uuid of the deleted question and message 'QUESTION DELETED' in the JSON response with the corresponding HTTP status.
+     * @throws AuthorizationFailedException if access token does not exit : if user has signed out : if non-owner tries to edit
+     * @throws InvalidQuestionException     if question with uuid which is to be deleted does not exist in the database
+     */
+    @RequestMapping(method = RequestMethod.DELETE, path = "/question/delete/{questionId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    private ResponseEntity<QuestionDeleteResponse> deleteQuestion(
+            @PathVariable("questionId") final String questionId, @RequestHeader("authorization") final String authorization)
+            throws AuthorizationFailedException, InvalidQuestionException {
+        String questionUUID = questionBusinessService.deleteQuestion(questionId, authorization);
+        final QuestionDeleteResponse questionDeleteResponse = new QuestionDeleteResponse();
+        questionDeleteResponse.id(questionUUID).status("QUESTION DELETED");
+        return new ResponseEntity<QuestionDeleteResponse>(questionDeleteResponse, HttpStatus.OK);
+    }
 }
