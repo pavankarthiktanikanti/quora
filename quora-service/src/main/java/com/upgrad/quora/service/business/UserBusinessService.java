@@ -132,12 +132,13 @@ public class UserBusinessService {
     }*/
     
     /**
-     * Method to get User Details from the database.
-     * @param userUuid
-     * @param authorization
-     * @return
-     * @throws AuthorizationFailedException
-     * @throws UserNotFoundException
+     * This Method is used to get User Details from the database.
+     * @param userUuid user id to get details of specific user.
+     * @param authorization holds the Bearer access token for authenticating
+     * @return the user profile if the conditions are satisfied 
+     * @throws AuthorizationFailedException If the access token provided by the user does not exist in the database,
+     * If the user has signed out 
+     * @throws UserNotFoundException If the user with uuid whose profile is to be retrieved does not exist in the database
      */
     public User getUser(final String userUuid, final String authorization) throws AuthorizationFailedException, UserNotFoundException {
         UserAuthEntity userAuthEntity = validateUserAuthentication(authorization);
