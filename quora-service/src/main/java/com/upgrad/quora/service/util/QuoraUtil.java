@@ -6,5 +6,5 @@ public interface QuoraUtil {
     public static final String BASIC_TOKEN = "Basic ";
     public static final String BEARER_TOKEN = "Bearer ";
     public static final String COLON = ":";
-
+    public static final String NON_ADMIN_ROLE = "nonadmin";
 }
