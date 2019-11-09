@@ -14,7 +14,7 @@ import java.util.Set;
 @Table(name = "question")
 @NamedQueries(
         {
-                @NamedQuery(name = "questionByUserId", query = "select q from Question q where q.user.id = :userId")
+                @NamedQuery(name = "questionByUserId", query = "select q from Question q where q.user.id = :userId"),
                 @NamedQuery(name = "questionByUUID", query = "select q from Question q where q.uuid = :uuid")
         }
 )
