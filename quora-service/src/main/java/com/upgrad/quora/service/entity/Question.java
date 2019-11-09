@@ -11,6 +11,7 @@ import java.time.ZonedDateTime;
 @NamedQueries(
         {
                 @NamedQuery(name = "questionByUserId", query = "select q from Question q where q.user.id = :userId")
+                @NamedQuery(name = "questionByUUID", query = "select q from Question q where q.uuid = :uuid")
         }
 )
 public class Question implements Serializable {
