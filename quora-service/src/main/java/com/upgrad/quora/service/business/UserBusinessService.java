@@ -131,30 +131,25 @@ public class UserBusinessService {
         return false;
     }*/
     
-    // Method to get User Details via checking AuthToken and user id.
+    /**
+     * Method to get User Details from the database.
+     * @param userUuid
+     * @param authorization
+     * @return
+     * @throws AuthorizationFailedException
+     * @throws UserNotFoundException
+     */
     public User getUser(final String userUuid, final String authorization) throws AuthorizationFailedException, UserNotFoundException {
-        UserAuthEntity userAuthEntity = userDao.getUserAuthToken(authorization);
-        if(userAuthEntity != null){
-            ZonedDateTime logout = userAuthEntity.getLogoutAt();
-            // If the user has signed out, throw "AuthorizationFailedException"
-            if (logout != null) {
-                throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to get user details");
-            }
-            User user = userDao.getUserByUUID(userUuid);
-            /**
-             * If the user with uuid whose profile is to be retrieved does not exist
-             * in the database, throw 'UserNotFoundException'
-             */
-            if (user == null){
-                throw new UserNotFoundException("USR-001", "User with entered uuid does not exist");
-            }
-            return user;
-        }
+        UserAuthEntity userAuthEntity = validateUserAuthentication(authorization);
+        User user = userDao.getUserByUUID(userUuid);
         /**
-         * If the access token provided by the user does not exist 
-         * in the database throw 'AuthorizationFailedException'
+         * If the user with uuid whose profile is to be retrieved does not exist
+         * in the database, throw 'UserNotFoundException'
          */
-        throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
+        if (user == null) {
+            throw new UserNotFoundException("USR-001", "User with entered uuid does not exist");
+        }
+        return user;
     }
 
 }
