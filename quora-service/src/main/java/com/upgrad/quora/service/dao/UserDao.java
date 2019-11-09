@@ -76,4 +76,17 @@ public class UserDao {
             return null;
         }
     }
+    
+    /**
+     * Retrieves the user detail matched with the userId passed
+     * @param userUUID Id of the user
+     * @return matched userID detail
+     */
+    public User getUserByUUID(String userUUID) {
+        try {
+            return entityManager.createNamedQuery("userByUUID", User.class).setParameter("uuid", userUUID).getSingleResult();
+        } catch (NoResultException nre) {
+            return null;
+        }
+    }
 }
