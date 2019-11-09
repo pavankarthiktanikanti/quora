@@ -2,7 +2,6 @@ package com.upgrad.quora.service.dao;
 
 import com.upgrad.quora.service.entity.Question;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
@@ -14,6 +13,18 @@ public class QuestionDao {
 
     @PersistenceContext
     private EntityManager entityManager;
+
+    /**
+     * This method is store the newly created question in DB
+     *
+     * @param question Is the question that needed to be saved in DB
+     * @return The question that is saved in DB
+     */
+    public Question createQuestion(Question question) {
+        entityManager.persist(question);
+        return question;
+    }
+
 
     /**
      * Retrieves all the questions present in the Database question table and returns as a list
@@ -39,7 +50,6 @@ public class QuestionDao {
     }
 
     // Edit Question method (JPA merge state)
-    @Transactional
     public Question updateQuestion(Question question) {
         entityManager.merge(question);
         return question;

@@ -29,6 +29,26 @@ public class QuestionBusinessService {
     private UserBusinessService userBusinessService;
 
     /**
+     * This method first validate the user calling the validate method is UserDao
+     * than this method stores the question in database if user is validated successfully
+     *
+     * @param question      this is question object that needed to be stored in database
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return the newly created question after saving in database
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Question createNewQuestion(Question question, String authorization) throws AuthorizationFailedException {
+
+        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        question.setDate(ZonedDateTime.now());
+        question.setUser(userAuthEntity.getUser());
+        Question createdQuestion = questionDao.createQuestion(question);
+        return createdQuestion;
+
+    }
+
+    /**
      * This method pulls all the question details from the database after validating the user authorization token
      * If the token is not valid, throws an Authorization failure
      *
@@ -52,6 +72,7 @@ public class QuestionBusinessService {
      * @throws AuthorizationFailedException if access token does not exit, if user has signed out, if non-owner tries to edit
      * @throws InvalidQuestionException     if question with uuid which is to be edited does not exist in the database
      */
+    @Transactional(propagation = Propagation.REQUIRED)
     public Question editQuestionContent(final Question question, final String questionId, final String authorization) throws AuthorizationFailedException, InvalidQuestionException {
         UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
         Question questionEntity = questionDao.getQuestionByUUID(questionId);
