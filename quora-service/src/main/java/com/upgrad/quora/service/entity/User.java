@@ -85,6 +85,11 @@ public class User implements Serializable {
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Question> questions;
 
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Set<Answer> answers;
+
     public Integer getId() {
         return id;
     }
