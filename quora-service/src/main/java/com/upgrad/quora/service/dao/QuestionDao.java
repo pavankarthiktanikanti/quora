@@ -22,5 +22,11 @@ public class QuestionDao {
         final List<Question> allQuestions = entityManager.createQuery("select q from Question q", Question.class).getResultList();
         return allQuestions;
     }
-
+    
+    // Edit Question method (JPA merge state)
+    @Transactional
+    public Question updateQuestion(Question question){
+        entityManager.merge(question);
+        return question;
+    }
 }
