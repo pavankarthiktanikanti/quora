@@ -20,10 +20,33 @@ import java.util.List;
 public class QuestionBusinessService {
 
     @Autowired
+    private UserDao userDao;
+
+    @Autowired
     private QuestionDao questionDao;
 
     @Autowired
     private UserBusinessService userBusinessService;
+
+    /**
+     * This method first validate the user calling the validate method is UserDao
+     * than this method stores the question in database if user is validated successfully
+     *
+     * @param question      this is question object that needed to be stored in database
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return the newly created question after saving in database
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Question createNewQuestion(Question question, String authorization) throws AuthorizationFailedException {
+
+        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        question.setDate(ZonedDateTime.now());
+        question.setUser(userAuthEntity.getUser());
+        Question createdQuestion = questionDao.createQuestion(question);
+        return createdQuestion;
+
+    }
 
     /**
      * This method pulls all the question details from the database after validating the user authorization token
@@ -49,6 +72,7 @@ public class QuestionBusinessService {
      * @throws AuthorizationFailedException if access token does not exit, if user has signed out, if non-owner tries to edit
      * @throws InvalidQuestionException     if question with uuid which is to be edited does not exist in the database
      */
+    @Transactional(propagation = Propagation.REQUIRED)
     public Question editQuestionContent(final Question question, final String questionId, final String authorization) throws AuthorizationFailedException, InvalidQuestionException {
         UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
         Question questionEntity = questionDao.getQuestionByUUID(questionId);
@@ -63,5 +87,28 @@ public class QuestionBusinessService {
         }
         questionEntity.setContent(question.getContent());
         return questionDao.updateQuestion(questionEntity);
+    }
+
+    /**
+     * This method fetches all the questions posted by a particular user after
+     * validating the authorization token is valid
+     * If token is invalid or user is logged out then appropriate error message
+     * is thrown back to the client
+     * Same applies when the userId itself doesn't match with any user in DB
+     *
+     * @param userUUID      The user UUID whose questions have to be retrieved
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return The list of all questions posted by the user matched with userId
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     * @throws UserNotFoundException        If no user id with that UUID exists in DB
+     */
+    public List<Question> getAllQuestionsByUser(String userUUID, String authorization) throws AuthorizationFailedException, UserNotFoundException {
+        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        final User user = userDao.getUserByUUID(userUUID);
+        // No user matched with the UUID
+        if (user == null) {
+            throw new UserNotFoundException("USR-001", "User with entered uuid whose question details are to be seen does not exist");
+        }
+        return questionDao.findQuestionByUserId(user.getId());
     }
 }
