@@ -8,6 +8,11 @@ import java.time.ZonedDateTime;
 
 @Entity
 @Table(name = "question")
+@NamedQueries(
+        {
+                @NamedQuery(name = "questionByUserId", query = "select q from Question q where q.user.id = :userId")
+        }
+)
 public class Question implements Serializable {
 
     @Id
