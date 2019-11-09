@@ -30,38 +30,30 @@ public class QuestionBusinessService {
         return questionDao.getAllQuestions();
     }
     
-    // method to edit question content : checks for all the conditions
-    public Question editQuestionContent(final Question question,final String questionid, final String authorization) throws AuthorizationFailedException, InvalidQuestionException {
-            UserAuthEntity userAuthEntity = userDao.getUserAuthToken(authorization);
-
-        if(userAuthEntity != null){
-            ZonedDateTime logout = userAuthEntity.getLogoutAt();
-            // If the user has signed out, throw 'AuthorizationFailedException'
-            if (logout != null) {
-                throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to edit the question");
+    /**
+     * This method is used to edit question content :
+     * checks for all the conditions and provides necessary response messages
+     *
+     * @param question      entity
+     * @param questionId    for the question which needs to be edited
+     * @param authorization holds the Bearer access token for authenticating
+     * @return updates the question as per the questionId provided
+     * @throws AuthorizationFailedException if access token does not exit, if user has signed out, if non-owner tries to edit
+     * @throws InvalidQuestionException     if question with uuid which is to be edited does not exist in the database
+     */
+    public Question editQuestionContent(final Question question, final String questionId, final String authorization) throws AuthorizationFailedException, InvalidQuestionException {
+        UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        Question questionEntity = questionDao.getQuestionByUUID(questionId);
+        // If the question with uuid which is to be edited does not exist in the database, throw 'InvalidQuestionException'
+        if (questionEntity == null) {
+            throw new InvalidQuestionException("QUES-001", "Entered question uuid does not exist");
+        } else {
+            // if the user who is not the owner of the question tries to edit the question throw "AuthorizationFailedException"
+            if (questionEntity.getUser() != userAuthEntity.getUser()) {
+                throw new AuthorizationFailedException("ATHR-003", "Only the question owner can edit the question");
             }
-
-            Question Entity = questionDao.getQuestionByUUID(questionid);
-            // If the question with uuid which is to be edited does not exist in the database, throw 'InvalidQuestionException'
-            if (Entity == null)
-            {
-                throw new InvalidQuestionException("QUES-001", "Entered question uuid does not exist");
-            }
-            else
-            {
-                // if the user who is not the owner of the question tries to edit the question throw "AuthorizationFailedException"
-                if (Entity.getUser() != userAuthEntity.getUser()){
-                    throw new AuthorizationFailedException("ATHR-003", "Only the question owner can edit the question");
-                }
-            }
-
-            question.setId(Entity.getId());
-            question.setUuid(Entity.getUuid());
-            question.setDate(Entity.getDate());
-            question.setUser(Entity.getUser());
-            return questionDao.updateQuestion(question);
         }
-        // If the access token provided by the user does not exist in the database throw 'AuthorizationFailedException'
-        throw new AuthorizationFailedException("ATHR-001", "User has not signed in");
+        questionEntity.setContent(question.getContent());
+        return questionDao.updateQuestion(questionEntity);
     }
 }
