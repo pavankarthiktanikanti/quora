@@ -87,4 +87,26 @@ public class QuestionController {
         QuestionEditResponse questionEditResponse = new QuestionEditResponse().id(editQuestionEntity.getUuid()).status("QUESTION EDITED");
         return new ResponseEntity<QuestionEditResponse>(questionEditResponse, HttpStatus.OK);
     }
+
+    /**
+     * This method fetches all the questions posted by a particular user matched
+     * by the userId from the DB
+     * Validates authorization token and throws error accordingly based on whether
+     * the user is signed out or an invalid token is passed
+     * If the userId doesn't match with any of the users in DB, then an error message
+     * is thrown saying user doesn't exist.
+     *
+     * @param userId        The user UUID whose questions have to be retrieved
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return The list of all questions posted by the user matched with userId
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     * @throws UserNotFoundException        If no user id with that UUID exists in DB
+     */
+    @RequestMapping(method = RequestMethod.GET, path = "/question/all/{userId}")
+    public ResponseEntity<List<QuestionDetailsResponse>> getAllQuestionsByUser(
+            @PathVariable("userId") final String userId, @RequestHeader final String authorization)
+            throws AuthorizationFailedException, UserNotFoundException {
+        List<Question> allQuestionsByUser = questionBusinessService.getAllQuestionsByUser(userId, authorization);
+        return getQuestionDetailsResponse(allQuestionsByUser);
+    }
 }

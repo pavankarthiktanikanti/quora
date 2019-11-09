@@ -20,6 +20,9 @@ import java.util.List;
 public class QuestionBusinessService {
 
     @Autowired
+    private UserDao userDao;
+
+    @Autowired
     private QuestionDao questionDao;
 
     @Autowired
@@ -63,5 +66,28 @@ public class QuestionBusinessService {
         }
         questionEntity.setContent(question.getContent());
         return questionDao.updateQuestion(questionEntity);
+    }
+
+    /**
+     * This method fetches all the questions posted by a particular user after
+     * validating the authorization token is valid
+     * If token is invalid or user is logged out then appropriate error message
+     * is thrown back to the client
+     * Same applies when the userId itself doesn't match with any user in DB
+     *
+     * @param userUUID      The user UUID whose questions have to be retrieved
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return The list of all questions posted by the user matched with userId
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     * @throws UserNotFoundException        If no user id with that UUID exists in DB
+     */
+    public List<Question> getAllQuestionsByUser(String userUUID, String authorization) throws AuthorizationFailedException, UserNotFoundException {
+        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        final User user = userDao.getUserByUUID(userUUID);
+        // No user matched with the UUID
+        if (user == null) {
+            throw new UserNotFoundException("USR-001", "User with entered uuid whose question details are to be seen does not exist");
+        }
+        return questionDao.findQuestionByUserId(user.getId());
     }
 }

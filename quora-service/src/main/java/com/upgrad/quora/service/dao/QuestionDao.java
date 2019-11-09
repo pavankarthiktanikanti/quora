@@ -3,9 +3,10 @@ package com.upgrad.quora.service.dao;
 import com.upgrad.quora.service.entity.Question;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
+
 import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import javax.persistence.NoResultException;
+import javax.persistence.PersistenceContext;
 import java.util.List;
 
 @Repository
@@ -23,7 +24,7 @@ public class QuestionDao {
         final List<Question> allQuestions = entityManager.createQuery("select q from Question q", Question.class).getResultList();
         return allQuestions;
     }
-    
+
     /**
      * Retrieves question present in database by ID
      *
@@ -36,11 +37,22 @@ public class QuestionDao {
             return null;
         }
     }
-    
+
     // Edit Question method (JPA merge state)
     @Transactional
-    public Question updateQuestion(Question question){
+    public Question updateQuestion(Question question) {
         entityManager.merge(question);
         return question;
+    }
+
+    /**
+     * Retrieves all the questions posted by a user matched with the userId field
+     * Here the userId is the Id attribute in User Entity
+     *
+     * @param userId The user id Id attribute of User Entity to pull the questions posted by that user
+     * @return The list of all questions posted by the matched user
+     */
+    public List<Question> findQuestionByUserId(Integer userId) {
+        return entityManager.createNamedQuery("questionByUserId", Question.class).setParameter("userId", userId).getResultList();
     }
 }
