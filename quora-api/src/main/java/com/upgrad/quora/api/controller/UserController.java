@@ -1,13 +1,17 @@
 package com.upgrad.quora.api.controller;
 
+import com.upgrad.quora.api.model.SigninResponse;
 import com.upgrad.quora.api.model.SignoutResponse;
 import com.upgrad.quora.api.model.SignupUserRequest;
 import com.upgrad.quora.api.model.SignupUserResponse;
 import com.upgrad.quora.service.business.UserBusinessService;
 import com.upgrad.quora.service.entity.User;
+import com.upgrad.quora.service.entity.UserAuthEntity;
+import com.upgrad.quora.service.exception.AuthenticationFailedException;
 import com.upgrad.quora.service.exception.SignOutRestrictedException;
 import com.upgrad.quora.service.exception.SignUpRestrictedException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -49,6 +53,24 @@ public class UserController {
         SignupUserResponse signupUserResponse = new SignupUserResponse();
         signupUserResponse.id(createdUser.getUuid()).status("USER SUCCESSFULLY REGISTERED");
         return new ResponseEntity<SignupUserResponse>(signupUserResponse, HttpStatus.CREATED);
+    }
+
+    /**
+     * This method is used to sign in a user who has successfully registered
+     * If not,throws a error message that the username does not exist or password is wrong
+     *
+     * @param authorization this contains the encoded username and password
+     * @return SignIn Response which contains user UUID and message stating sign in successfully or not
+     * @throws AuthenticationFailedException will be thrown when the username or password does not match
+     */
+    @RequestMapping(method = RequestMethod.POST, path = "/user/signin", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    public ResponseEntity<SigninResponse> signIn(@RequestHeader("authorization") final String authorization) throws AuthenticationFailedException {
+        UserAuthEntity userAuthEntity = userBusinessService.signIn(authorization);
+        User user = userAuthEntity.getUser();
+        SigninResponse signinResponse = new SigninResponse().id(user.getUuid()).message("SIGNED IN SUCCESSFULLY");
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.add("access_token", userAuthEntity.getAccessToken());
+        return new ResponseEntity<SigninResponse>(signinResponse, httpHeaders, HttpStatus.OK);
     }
 
     /**

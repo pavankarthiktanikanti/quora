@@ -26,6 +26,18 @@ public class UserDao {
     }
 
     /**
+     * This method is added to persist the authData in database
+     *
+     * @param userAuthEntity Contains user information who has signed in and the access token
+     * @return The userAuthEntity that is saved in data base
+     */
+    public UserAuthEntity createAuthToken(final UserAuthEntity userAuthEntity) {
+        entityManager.persist(userAuthEntity);
+        return userAuthEntity;
+    }
+
+
+    /**
      * Updates the User Auth Entity, like logout times or tokens to the Database
      *
      * @param updatedUserAuthEntity The Entity object to be updated in the Database
