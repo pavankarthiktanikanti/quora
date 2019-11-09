@@ -1,18 +1,24 @@
 package com.upgrad.quora.service.entity;
 
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
+
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
+import java.io.Serializable;
+import java.util.Set;
 
 @Entity
 @Table(name = "users")
 @NamedQueries(
         {
                 @NamedQuery(name = "userByUserName", query = "select u from User u where u.userName = :userName"),
-                @NamedQuery(name = "userByEmail", query = "select u from User u where u.email =:email")
+                @NamedQuery(name = "userByEmail", query = "select u from User u where u.email =:email"),
+                @NamedQuery(name = "userByUUID", query = "select u from User u where u.uuid = :uuid")
         }
 )
-public class User {
+public class User implements Serializable {
 
     @Id
     @Column(name = "id")
@@ -73,6 +79,10 @@ public class User {
     @Column(name = "contactnumber")
     @Size(max = 30)
     private String contactNumber;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    private Set<Question> questions;
 
     public Integer getId() {
         return id;
