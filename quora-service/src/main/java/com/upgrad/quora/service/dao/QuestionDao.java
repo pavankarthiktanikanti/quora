@@ -23,22 +23,10 @@ public class QuestionDao {
         return allQuestions;
     }
     
-    // Retrieves question by uuid in the Database Question Table and returns in form of singleResult.
-    public Question getQuestionByUUID(String questionUUID) {
-        try {
-            return entityManager.createNamedQuery("questionByUUID", Question.class).setParameter("uuid", questionUUID).getSingleResult();
-        } catch (NoResultException nre) {
-            return null;
-        }
-    }
-    
     // Edit Question method (JPA merge state)
     @Transactional
     public Question updateQuestion(Question question){
         entityManager.merge(question);
         return question;
     }
-    
-    
-
 }
