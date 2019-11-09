@@ -65,4 +65,14 @@ public class QuestionDao {
     public List<Question> findQuestionByUserId(Integer userId) {
         return entityManager.createNamedQuery("questionByUserId", Question.class).setParameter("userId", userId).getResultList();
     }
+
+    /**
+     * This method is used to delete a question
+     *
+     * @param question Is the question that needed to be deleted
+     */
+    public void deleteQuestion(Question question) {
+        entityManager.remove(question);
+    }
+
 }
