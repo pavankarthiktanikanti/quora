@@ -81,6 +81,7 @@ public class User implements Serializable {
     private String contactNumber;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JoinColumn(name = "id")
     @OnDelete(action = OnDeleteAction.CASCADE)
     private Set<Question> questions;
 
