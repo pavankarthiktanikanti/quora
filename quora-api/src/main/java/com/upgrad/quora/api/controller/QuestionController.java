@@ -139,7 +139,7 @@ public class QuestionController {
      * @throws InvalidQuestionException     if question with uuid which is to be deleted does not exist in the database
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/question/delete/{questionId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    private ResponseEntity<QuestionDeleteResponse> deleteQuestion(
+    public ResponseEntity<QuestionDeleteResponse> deleteQuestion(
             @PathVariable("questionId") final String questionId, @RequestHeader("authorization") final String authorization)
             throws AuthorizationFailedException, InvalidQuestionException {
         String questionUUID = questionBusinessService.deleteQuestion(questionId, authorization);
