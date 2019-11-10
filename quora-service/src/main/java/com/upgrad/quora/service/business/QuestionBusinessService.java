@@ -41,7 +41,8 @@ public class QuestionBusinessService {
     @Transactional(propagation = Propagation.REQUIRED)
     public Question createNewQuestion(Question question, String authorization) throws AuthorizationFailedException {
 
-        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to post a question");
         question.setDate(ZonedDateTime.now());
         question.setUser(userAuthEntity.getUser());
         Question createdQuestion = questionDao.createQuestion(question);
@@ -58,10 +59,11 @@ public class QuestionBusinessService {
      * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
      */
     public List<Question> getAllQuestions(String authorization) throws AuthorizationFailedException {
-        userBusinessService.validateUserAuthentication(authorization);
+        userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to get all questions");
         return questionDao.getAllQuestions();
     }
-    
+
     /**
      * This method is used to edit question content :
      * checks for all the conditions and provides necessary response messages
@@ -75,7 +77,8 @@ public class QuestionBusinessService {
      */
     @Transactional(propagation = Propagation.REQUIRED)
     public Question editQuestionContent(final Question question, final String questionId, final String authorization) throws AuthorizationFailedException, InvalidQuestionException {
-        UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to edit the question");
         Question questionEntity = questionDao.getQuestionByUUID(questionId);
         // If the question with uuid which is to be edited does not exist in the database, throw 'InvalidQuestionException'
         if (questionEntity == null) {
@@ -104,7 +107,8 @@ public class QuestionBusinessService {
      * @throws UserNotFoundException        If no user id with that UUID exists in DB
      */
     public List<Question> getAllQuestionsByUser(String userUUID, String authorization) throws AuthorizationFailedException, UserNotFoundException {
-        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to get all questions posted by a specific user");
         final User user = userDao.getUserByUUID(userUUID);
         // No user matched with the UUID
         if (user == null) {
@@ -125,7 +129,8 @@ public class QuestionBusinessService {
      */
     @Transactional(propagation = Propagation.REQUIRED)
     public String deleteQuestion(String questionId, String authorization) throws AuthorizationFailedException, InvalidQuestionException {
-        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        final UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to delete a question");
         Question question = questionDao.getQuestionByUUID(questionId);
         if (question == null) {
             throw new InvalidQuestionException("QUES-001", "Entered question uuid does not exist");

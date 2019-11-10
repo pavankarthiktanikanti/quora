@@ -5,7 +5,6 @@ import com.upgrad.quora.service.dao.AnswerDao;
 import com.upgrad.quora.service.dao.QuestionDao;
 import com.upgrad.quora.service.entity.Answer;
 import com.upgrad.quora.service.entity.Question;
-import com.upgrad.quora.service.entity.User;
 import com.upgrad.quora.service.entity.UserAuthEntity;
 import com.upgrad.quora.service.exception.AuthorizationFailedException;
 import com.upgrad.quora.service.exception.InvalidQuestionException;
@@ -13,8 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-
-import java.time.ZonedDateTime;
 
 @Service
 public class AnswerBusinessService {
@@ -42,7 +39,8 @@ public class AnswerBusinessService {
     @Transactional(propagation = Propagation.REQUIRED)
     public Answer createAnswer(final Answer answer, final String questionId, final String authorization) throws
             AuthorizationFailedException, InvalidQuestionException {
-        UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization);
+        UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to post an answer");
 
         Question questionEntity = questionDao.getQuestionByUUID(questionId);
         if (questionEntity == null) {
