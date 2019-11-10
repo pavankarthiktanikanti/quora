@@ -1,6 +1,7 @@
 package com.upgrad.quora.api.exception;
 
 import com.upgrad.quora.api.model.ErrorResponse;
+import com.upgrad.quora.service.common.UnexpectedException;
 import com.upgrad.quora.service.exception.*;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -115,6 +116,22 @@ public class RestExceptionHandler {
         return new ResponseEntity<ErrorResponse>(
                 new ErrorResponse().code(exe.getCode()).message(exe.getErrorMessage()), HttpStatus.NOT_FOUND
         );
+    }
+
+    /**
+     * Global Exception handler for Unexpected Exceptions
+     * Handles the exception and sends back the user/client a user friendly message along with HTTP Status code
+     *
+     * @param exe     The UserNotFoundException Failure Exception occurred in the application
+     * @param request The web request information if any to be used while framing the response
+     * @return The Error Response consisting of the Http status code and an error message
+     */
+    @ExceptionHandler(UnexpectedException.class)
+    public ResponseEntity<ErrorResponse> unexpectedException(UnexpectedException exe, WebRequest request) {
+        return new ResponseEntity<ErrorResponse>(
+                new ErrorResponse().code(exe.getErrorCode().toString()).message(exe.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR
+        );
+
     }
 
 }
