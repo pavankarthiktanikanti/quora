@@ -37,7 +37,7 @@ public class QuestionController {
      * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
      */
     @RequestMapping(method = RequestMethod.POST, path = "/question/create", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
-    private ResponseEntity<QuestionResponse> createQuestion(final QuestionRequest questionRequest,
+    public ResponseEntity<QuestionResponse> createQuestion(final QuestionRequest questionRequest,
                                                             @RequestHeader("authorization") final String authorization)
             throws AuthorizationFailedException {
         final Question question = new Question();
