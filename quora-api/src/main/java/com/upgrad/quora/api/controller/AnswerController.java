@@ -86,7 +86,7 @@ public class AnswerController {
      * @throws AnswerNotFoundException      If the answer with uuid which is to be deleted does not exist in the database
      */
     @RequestMapping(method = RequestMethod.DELETE, path = "/answer/delete/{answerId}")
-    private ResponseEntity<AnswerResponse> deleteAnswer(
+    public ResponseEntity<AnswerResponse> deleteAnswer(
             @PathVariable("answerId") final String answerId, @RequestHeader("authorization") final String authorization)
             throws AuthorizationFailedException, AnswerNotFoundException, InvalidQuestionException {
         String answerUUID = answerBusinessService.deleteAnswer(answerId, authorization);
