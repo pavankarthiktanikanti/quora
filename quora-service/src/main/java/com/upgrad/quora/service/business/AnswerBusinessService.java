@@ -75,7 +75,7 @@ public class AnswerBusinessService {
         Answer answerEntity = answerDao.getAnswerByUUID(answerId);
         // If the answer with uuid which is to be edited does not exist in the database, throw 'AnswerNotFoundException'
         if (answerEntity == null) {
-            throw new AnswerNotFoundException("ANS-001'", "Entered answer uuid does not exist");
+            throw new AnswerNotFoundException("ANS-001", "Entered answer uuid does not exist");
         } else {
             // if the user who is not the owner of the answer tries to edit the answer throw "AuthorizationFailedException"
             if (answerEntity.getUser().getId() != userAuthEntity.getUser().getId()) {
