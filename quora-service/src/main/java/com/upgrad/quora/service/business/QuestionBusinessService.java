@@ -85,7 +85,7 @@ public class QuestionBusinessService {
             throw new InvalidQuestionException("QUES-001", "Entered question uuid does not exist");
         } else {
             // if the user who is not the owner of the question tries to edit the question throw "AuthorizationFailedException"
-            if (questionEntity.getUser() != userAuthEntity.getUser()) {
+            if (questionEntity.getUser().getId() != userAuthEntity.getUser().getId()) {
                 throw new AuthorizationFailedException("ATHR-003", "Only the question owner can edit the question");
             }
         }
