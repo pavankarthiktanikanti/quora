@@ -6,6 +6,7 @@ import com.upgrad.quora.service.dao.QuestionDao;
 import com.upgrad.quora.service.entity.Answer;
 import com.upgrad.quora.service.entity.Question;
 import com.upgrad.quora.service.entity.UserAuthEntity;
+import com.upgrad.quora.service.exception.AnswerNotFoundException;
 import com.upgrad.quora.service.exception.AuthorizationFailedException;
 import com.upgrad.quora.service.exception.InvalidQuestionException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -53,6 +54,36 @@ public class AnswerBusinessService {
         answer.setQuestion(questionEntity);
         answer.setUser(userAuthEntity.getUser());
         return answerDao.createAnswer(answer);
+    }
+
+    /**
+     * This method is used to edit answer content
+     * checks for all the conditions and provides necessary response messages
+     *
+     * @param answer        entity that needed to be updated
+     * @param answerId      Is the uuid of the answer that needed to be edited
+     * @param authorization holds the Bearer access token for authenticating
+     * @return the answer after updating the content
+     * @throws AuthorizationFailedException if access token does not exit, if user has signed out, if non-owner tries to edit
+     * @throws AnswerNotFoundException      if answer with uuid which is to be edited does not exist in the database
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public Answer editAnswerContent(final Answer answer, final String answerId, final String authorization)
+            throws AuthorizationFailedException, AnswerNotFoundException {
+        UserAuthEntity userAuthEntity = userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to edit an answer");
+        Answer answerEntity = answerDao.getAnswerByUUID(answerId);
+        // If the answer with uuid which is to be edited does not exist in the database, throw 'AnswerNotFoundException'
+        if (answerEntity == null) {
+            throw new AnswerNotFoundException("ANS-001'", "Entered answer uuid does not exist");
+        } else {
+            // if the user who is not the owner of the answer tries to edit the answer throw "AuthorizationFailedException"
+            if (answerEntity.getUser().getId() != userAuthEntity.getUser().getId()) {
+                throw new AuthorizationFailedException("ATHR-003", "Only the answer owner can edit the answer");
+            }
+        }
+        answerEntity.setAns(answer.getAns());
+        return answerDao.updateAnswerContent(answerEntity);
     }
 
 }
