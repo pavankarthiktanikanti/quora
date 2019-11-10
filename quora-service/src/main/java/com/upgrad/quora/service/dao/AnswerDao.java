@@ -6,6 +6,7 @@ import org.springframework.stereotype.Repository;
 import javax.persistence.EntityManager;
 import javax.persistence.NoResultException;
 import javax.persistence.PersistenceContext;
+import java.util.List;
 
 @Repository
 public class AnswerDao {
@@ -56,6 +57,16 @@ public class AnswerDao {
      */
     public void deleteAnswer(Answer answer) {
         entityManager.remove(answer);
+    }
+
+    /**
+     * Retrieves all the answer records based on the question
+     *
+     * @param questionId The question Id attribute to pull the answers with foreign key value
+     * @return The list of all answers matched with the question Id
+     */
+    public List<Answer> getAllAnswersByQuestionId(Integer questionId) {
+        return entityManager.createNamedQuery("answerByQuestionId", Answer.class).setParameter("questionId", questionId).getResultList();
     }
 
 }

@@ -15,6 +15,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Service
 public class AnswerBusinessService {
     @Autowired
@@ -121,6 +123,24 @@ public class AnswerBusinessService {
         throw new AuthorizationFailedException("ATHR-003", "Only the answer owner or admin can delete the answer");
     }
 
-
+    /**
+     * This method fetches all the answers posted to a Specific question referred by questionId
+     * after validating the authorization token
+     *
+     * @param questionId    The UUID of the question for which answers are to be retrieved
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return The list of all answers posted for a specific question
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     * @throws InvalidQuestionException     If the Question with the uuid passed doesn't exist in DB
+     */
+    public List<Answer> getAllAnswersToQuestion(String questionId, String authorization) throws AuthorizationFailedException, InvalidQuestionException {
+        userBusinessService.validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to get the answers");
+        final Question question = questionDao.getQuestionByUUID(questionId);
+        if (question == null) {
+            throw new InvalidQuestionException("QUES-001", "The question with entered uuid whose details are to be seen does not exist");
+        }
+        return answerDao.getAllAnswersByQuestionId(question.getId());
+    }
 }
 
