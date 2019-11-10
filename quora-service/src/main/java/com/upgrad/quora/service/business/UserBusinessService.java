@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.ConstraintViolationException;
 import java.time.ZonedDateTime;
 import java.util.Base64;
 
@@ -28,6 +29,7 @@ public class UserBusinessService {
      * Encrypts the user password before storing in the DB
      * Checks if the existing user is trying to signup again by matching username/email
      * If so, throws error message as already username taken or already registered
+     * It throws Unexpected Exception if not null fields are set to null
      *
      * @param user The user information to be saved as part of signup
      * @return The persisted user details with the id value generated
@@ -42,12 +44,17 @@ public class UserBusinessService {
         if (userDao.getUserByEmail(user.getEmail()) != null) {
             throw new SignUpRestrictedException("SGR-002", "This user has already been registered, try with any other emailId");
         }
-        String password = user.getPassword();
-        String[] encryptedText = cryptographyProvider.encrypt(user.getPassword());
-        user.setSalt(encryptedText[0]);
-        user.setPassword(encryptedText[1]);
-        user.setRole(QuoraUtil.NON_ADMIN_ROLE);
-        return userDao.createUser(user);
+        try {
+            String password = user.getPassword();
+            String[] encryptedText = cryptographyProvider.encrypt(user.getPassword());
+            user.setSalt(encryptedText[0]);
+            user.setPassword(encryptedText[1]);
+            user.setRole(QuoraUtil.NON_ADMIN_ROLE);
+            return userDao.createUser(user);
+        } catch (NullPointerException | ConstraintViolationException ex) {
+            GenericErrorCode genericErrorCode = GenericErrorCode.GEN_001;
+            throw new UnexpectedException(genericErrorCode, ex);
+        }
     }
 
     /**
@@ -92,10 +99,7 @@ public class UserBusinessService {
                 throw new AuthenticationFailedException("ATH-002", "Password failed");
             }
 
-        } catch (ArrayIndexOutOfBoundsException ex) {
-            GenericErrorCode genericErrorCode = GenericErrorCode.GEN_001;
-            throw new UnexpectedException(genericErrorCode, ex);
-        } catch (IllegalArgumentException ex) {
+        } catch (ArrayIndexOutOfBoundsException | IllegalArgumentException ex) {
             GenericErrorCode genericErrorCode = GenericErrorCode.GEN_001;
             throw new UnexpectedException(genericErrorCode, ex);
         }

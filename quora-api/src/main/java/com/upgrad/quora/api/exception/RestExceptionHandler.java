@@ -122,7 +122,7 @@ public class RestExceptionHandler {
      * Global Exception handler for Unexpected Exceptions
      * Handles the exception and sends back the user/client a user friendly message along with HTTP Status code
      *
-     * @param exe     The UserNotFoundException Failure Exception occurred in the application
+     * @param exe     The UnexpectedException Failure Exception occurred in the application
      * @param request The web request information if any to be used while framing the response
      * @return The Error Response consisting of the Http status code and an error message
      */
