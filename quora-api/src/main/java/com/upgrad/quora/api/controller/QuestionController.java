@@ -1,11 +1,6 @@
 package com.upgrad.quora.api.controller;
 
-import com.upgrad.quora.api.model.QuestionDeleteResponse;
-import com.upgrad.quora.api.model.QuestionDetailsResponse;
-import com.upgrad.quora.api.model.QuestionRequest;
-import com.upgrad.quora.api.model.QuestionResponse;
-import com.upgrad.quora.api.model.QuestionEditResponse;
-import com.upgrad.quora.api.model.QuestionEditRequest;
+import com.upgrad.quora.api.model.*;
 import com.upgrad.quora.service.business.QuestionBusinessService;
 import com.upgrad.quora.service.entity.Question;
 import com.upgrad.quora.service.exception.AuthorizationFailedException;
@@ -30,6 +25,29 @@ public class QuestionController {
 
     @Autowired
     private QuestionBusinessService questionBusinessService;
+
+
+    /**
+     * This method is used to create a new question
+     * It uses Bearer token to validate the user
+     *
+     * @param questionRequest Contains all the attributes about the question
+     * @param authorization   Holds the Bearer access token for authenticating the user
+     * @return ResponseEntity with required question uuid and status
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     */
+    @RequestMapping(method = RequestMethod.POST, path = "/question/create", consumes = MediaType.APPLICATION_JSON_UTF8_VALUE, produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    private ResponseEntity<QuestionResponse> createQuestion(final QuestionRequest questionRequest,
+                                                            @RequestHeader("authorization") final String authorization)
+            throws AuthorizationFailedException {
+        final Question question = new Question();
+        question.setUuid(UUID.randomUUID().toString());
+        question.setContent(questionRequest.getContent());
+        Question createdQuestion = questionBusinessService.createNewQuestion(question, authorization);
+        QuestionResponse questionResponse = new QuestionResponse();
+        questionResponse.id(createdQuestion.getUuid()).status("QUESTION CREATED");
+        return new ResponseEntity<QuestionResponse>(questionResponse, HttpStatus.CREATED);
+    }
 
     /**
      * This method validates the user session and if active pulls all the questions from the database
@@ -86,5 +104,47 @@ public class QuestionController {
         final Question editQuestionEntity = questionBusinessService.editQuestionContent(question, questionId, authorization);
         QuestionEditResponse questionEditResponse = new QuestionEditResponse().id(editQuestionEntity.getUuid()).status("QUESTION EDITED");
         return new ResponseEntity<QuestionEditResponse>(questionEditResponse, HttpStatus.OK);
+    }
+
+    /**
+     * This method fetches all the questions posted by a particular user matched
+     * by the userId from the DB
+     * Validates authorization token and throws error accordingly based on whether
+     * the user is signed out or an invalid token is passed
+     * If the userId doesn't match with any of the users in DB, then an error message
+     * is thrown saying user doesn't exist.
+     *
+     * @param userId        The user UUID whose questions have to be retrieved
+     * @param authorization holds the Bearer access token for authenticating the user
+     * @return The list of all questions posted by the user matched with userId
+     * @throws AuthorizationFailedException If the token is not present in DB or user already logged out
+     * @throws UserNotFoundException        If no user id with that UUID exists in DB
+     */
+    @RequestMapping(method = RequestMethod.GET, path = "/question/all/{userId}")
+    public ResponseEntity<List<QuestionDetailsResponse>> getAllQuestionsByUser(
+            @PathVariable("userId") final String userId, @RequestHeader final String authorization)
+            throws AuthorizationFailedException, UserNotFoundException {
+        List<Question> allQuestionsByUser = questionBusinessService.getAllQuestionsByUser(userId, authorization);
+        return getQuestionDetailsResponse(allQuestionsByUser);
+    }
+
+    /**
+     * This method is used to delete the question.
+     * Note, only the owner of the question or admin can delete the question
+     *
+     * @param questionId    It is uuid of the question to be deleted
+     * @param authorization holds the Bearer access token for authenticating the user.
+     * @return uuid of the deleted question and message 'QUESTION DELETED' in the JSON response with the corresponding HTTP status.
+     * @throws AuthorizationFailedException if access token does not exit : if user has signed out : if non-owner tries to edit
+     * @throws InvalidQuestionException     if question with uuid which is to be deleted does not exist in the database
+     */
+    @RequestMapping(method = RequestMethod.DELETE, path = "/question/delete/{questionId}", produces = MediaType.APPLICATION_JSON_UTF8_VALUE)
+    private ResponseEntity<QuestionDeleteResponse> deleteQuestion(
+            @PathVariable("questionId") final String questionId, @RequestHeader("authorization") final String authorization)
+            throws AuthorizationFailedException, InvalidQuestionException {
+        String questionUUID = questionBusinessService.deleteQuestion(questionId, authorization);
+        final QuestionDeleteResponse questionDeleteResponse = new QuestionDeleteResponse();
+        questionDeleteResponse.id(questionUUID).status("QUESTION DELETED");
+        return new ResponseEntity<QuestionDeleteResponse>(questionDeleteResponse, HttpStatus.OK);
     }
 }

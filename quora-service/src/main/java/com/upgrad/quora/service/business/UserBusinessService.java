@@ -3,10 +3,7 @@ package com.upgrad.quora.service.business;
 import com.upgrad.quora.service.dao.UserDao;
 import com.upgrad.quora.service.entity.User;
 import com.upgrad.quora.service.entity.UserAuthEntity;
-import com.upgrad.quora.service.exception.AuthorizationFailedException;
-import com.upgrad.quora.service.exception.SignOutRestrictedException;
-import com.upgrad.quora.service.exception.SignUpRestrictedException;
-import com.upgrad.quora.service.exception.UserNotFoundException;
+import com.upgrad.quora.service.exception.*;
 import com.upgrad.quora.service.util.QuoraUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -14,7 +11,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.ZonedDateTime;
-import java.time.temporal.ChronoUnit;
+import java.util.Base64;
 
 @Service
 public class UserBusinessService {
@@ -37,18 +34,62 @@ public class UserBusinessService {
     @Transactional(propagation = Propagation.REQUIRED)
     public User signup(User user) throws SignUpRestrictedException {
 
-        String password = user.getPassword();
-        String[] encryptedText = cryptographyProvider.encrypt(user.getPassword());
-        user.setSalt(encryptedText[0]);
-        user.setPassword(encryptedText[1]);
         if (userDao.getUserByUserName(user.getUserName()) != null) {
             throw new SignUpRestrictedException("SGR-001", "Try any other Username, this Username has already been taken");
         }
         if (userDao.getUserByEmail(user.getEmail()) != null) {
             throw new SignUpRestrictedException("SGR-002", "This user has already been registered, try with any other emailId");
         }
+        String password = user.getPassword();
+        String[] encryptedText = cryptographyProvider.encrypt(user.getPassword());
+        user.setSalt(encryptedText[0]);
+        user.setPassword(encryptedText[1]);
+        user.setRole(QuoraUtil.NON_ADMIN_ROLE);
         return userDao.createUser(user);
     }
+
+    /**
+     * This method takes the authorization string which is encoded username and password
+     * If the username and password doesnot matches than it throws Authentication failed exception
+     * If the username and password match than auth token is generated
+     *
+     * @param authorization holds the basic access token used for authentication
+     * @return userAuthTokenEntity that conatins acess token and user UUID
+     * @throws AuthenticationFailedException if the username doesnot exists or password doesnot match
+     */
+    @Transactional(propagation = Propagation.REQUIRED)
+    public UserAuthEntity signIn(String authorization) throws AuthenticationFailedException {
+        //this will be used to decode the request header authorization
+        byte[] decode = Base64.getDecoder().decode(authorization.split(QuoraUtil.BASIC_TOKEN)[1]);
+        String decodedText = new String(decode);
+        String[] decodedArray = decodedText.split(QuoraUtil.COLON);
+        String username = decodedArray[0];
+        String password = decodedArray[1];
+        User user = userDao.getUserByUserName(username);
+        if (user == null) {
+            throw new AuthenticationFailedException("ATH-001", "This username does not exist");
+        }
+
+        final String encryptedPassword = cryptographyProvider.encrypt(password, user.getSalt());
+        if (encryptedPassword.equals(user.getPassword())) {
+
+            JwtTokenProvider jwtTokenProvider = new JwtTokenProvider(encryptedPassword);
+            UserAuthEntity userAuthTokenEntity = new UserAuthEntity();
+            userAuthTokenEntity.setUser(user);
+            final ZonedDateTime now = ZonedDateTime.now();
+            final ZonedDateTime expiresAt = now.plusHours(8);
+            userAuthTokenEntity.setAccessToken(jwtTokenProvider.generateToken(user.getUuid(), now, expiresAt));
+            userAuthTokenEntity.setLoginAt(now);
+            userAuthTokenEntity.setExpiresAt(expiresAt);
+            userAuthTokenEntity.setUuid(user.getUuid());
+            return userDao.createAuthToken(userAuthTokenEntity);
+
+        } else {
+            throw new AuthenticationFailedException("ATH-002", "Password failed");
+        }
+
+    }
+
 
     /**
      * This method validates the user session by making use of the access token
@@ -89,12 +130,16 @@ public class UserBusinessService {
     /**
      * This method validates the authorization access token passed while accessing the apis after signing in
      * Handles the token both with/without Bearer prefix in the authorization token
+     * Generic method used for different scenarios, so for ATHR-002 the message text will be used
+     * from the dynamic value passed in
      *
-     * @param authorization holds the Bearer access token for authenticating the user
+     * @param authorization  holds the Bearer access token for authenticating the user
+     * @param athr002Message The message text for different scenarios of ATHR-002 error code
      * @return The userAuthEntity based on the matched authorization
      * @throws AuthorizationFailedException if the token is not present in DB or user already logged out
      */
-    public UserAuthEntity validateUserAuthentication(String authorization) throws AuthorizationFailedException {
+    public UserAuthEntity validateUserAuthentication(String authorization, String athr002Message)
+            throws AuthorizationFailedException {
         String[] bearerToken = authorization.split(QuoraUtil.BEARER_TOKEN);
         // If Bearer Token prefix is missed, ignore and just use the authorization text
         if (bearerToken != null && bearerToken.length > 1) {
@@ -107,7 +152,7 @@ public class UserBusinessService {
         }
         // Token matches, but the user has already logged out
         if (userAuthEntity.getLogoutAt() != null) {
-            throw new AuthorizationFailedException("ATHR-002", "User is signed out.Sign in first to post a question");
+            throw new AuthorizationFailedException("ATHR-002", athr002Message);
         }
         return userAuthEntity;
     }
@@ -122,28 +167,30 @@ public class UserBusinessService {
      * @return true if all session conditions satisfy, false otherwise
 
     public Boolean isUserSessionValid(UserAuthEntity userAuthEntity) {
-        if (userAuthEntity != null && userAuthEntity.getLogoutAt() == null
-                && userAuthEntity.getExpiresAt() != null) {
-            Long timeDifference = ChronoUnit.MILLIS.between(ZonedDateTime.now(), userAuthEntity.getExpiresAt());
-            // Negative timeDifference indicates an expired access token,
-            // difference should be with in the limit, token will be expired after 8 hours
-            return (timeDifference >= 0 && timeDifference <= QuoraUtil.EIGHT_HOURS_IN_MILLIS);
-        }
-        // Token expired or user already logged out or user never signed in before(may also be the case of invalid token)
-        return false;
+    if (userAuthEntity != null && userAuthEntity.getLogoutAt() == null
+    && userAuthEntity.getExpiresAt() != null) {
+    Long timeDifference = ChronoUnit.MILLIS.between(ZonedDateTime.now(), userAuthEntity.getExpiresAt());
+    // Negative timeDifference indicates an expired access token,
+    // difference should be with in the limit, token will be expired after 8 hours
+    return (timeDifference >= 0 && timeDifference <= QuoraUtil.EIGHT_HOURS_IN_MILLIS);
+    }
+    // Token expired or user already logged out or user never signed in before(may also be the case of invalid token)
+    return false;
     }*/
-    
+
     /**
      * This Method is used to get User Details from the database.
-     * @param userUuid user id to get details of specific user.
+     *
+     * @param userUuid      user id to get details of specific user.
      * @param authorization holds the Bearer access token for authenticating
-     * @return the user profile if the conditions are satisfied 
+     * @return the user profile if the conditions are satisfied
      * @throws AuthorizationFailedException If the access token provided by the user does not exist in the database,
-     * If the user has signed out 
-     * @throws UserNotFoundException If the user with uuid whose profile is to be retrieved does not exist in the database
+     *                                      If the user has signed out
+     * @throws UserNotFoundException        If the user with uuid whose profile is to be retrieved does not exist in the database
      */
     public User getUser(final String userUuid, final String authorization) throws AuthorizationFailedException, UserNotFoundException {
-        UserAuthEntity userAuthEntity = validateUserAuthentication(authorization);
+        UserAuthEntity userAuthEntity = validateUserAuthentication(authorization,
+                "User is signed out.Sign in first to get user details");
         User user = userDao.getUserByUUID(userUuid);
         /**
          * If the user with uuid whose profile is to be retrieved does not exist

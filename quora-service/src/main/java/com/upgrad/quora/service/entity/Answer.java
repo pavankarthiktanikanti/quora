@@ -1,24 +1,19 @@
 package com.upgrad.quora.service.entity;
 
-import org.hibernate.annotations.OnDelete;
-import org.hibernate.annotations.OnDeleteAction;
-
 import javax.persistence.*;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
 import java.io.Serializable;
 import java.time.ZonedDateTime;
-import java.util.Set;
 
 @Entity
-@Table(name = "question")
+@Table(name = "answer")
 @NamedQueries(
         {
-                @NamedQuery(name = "questionByUserId", query = "select q from Question q where q.user.id = :userId"),
-                @NamedQuery(name = "questionByUUID", query = "select q from Question q where q.uuid = :uuid")
+                @NamedQuery(name = "answerByUUID", query = "select ans from Answer ans where ans.uuid = :uuid")
         }
 )
-public class Question implements Serializable {
+public class Answer implements Serializable {
 
     @Id
     @Column(name = "id")
@@ -30,10 +25,10 @@ public class Question implements Serializable {
     @Size(max = 200)
     private String uuid;
 
-    @Column(name = "content")
+    @Column(name = "ans")
     @NotNull
-    @Size(max = 500)
-    private String content;
+    @Size(max = 255)
+    private String ans;
 
     @Column(name = "date")
     @NotNull
@@ -44,10 +39,10 @@ public class Question implements Serializable {
     @NotNull
     private User user;
 
-    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.LAZY)
-    @JoinColumn(name = "id")
-    @OnDelete(action = OnDeleteAction.CASCADE)
-    private Set<Answer> answers;
+    @ManyToOne
+    @JoinColumn(name = "question_id")
+    @NotNull
+    private Question question;
 
     public Integer getId() {
         return id;
@@ -65,12 +60,12 @@ public class Question implements Serializable {
         this.uuid = uuid;
     }
 
-    public String getContent() {
-        return content;
+    public String getAns() {
+        return ans;
     }
 
-    public void setContent(String content) {
-        this.content = content;
+    public void setAns(String ans) {
+        this.ans = ans;
     }
 
     public ZonedDateTime getDate() {
@@ -87,5 +82,13 @@ public class Question implements Serializable {
 
     public void setUser(User user) {
         this.user = user;
+    }
+
+    public Question getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(Question question) {
+        this.question = question;
     }
 }
