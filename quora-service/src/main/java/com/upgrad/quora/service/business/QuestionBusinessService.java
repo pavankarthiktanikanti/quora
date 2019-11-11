@@ -102,14 +102,7 @@ public class QuestionBusinessService {
             }
         }
         questionEntity.setContent(question.getContent());
-        try {
-            return questionDao.updateQuestion(questionEntity);
-        } catch (ConstraintViolationException ex) {
-            GenericErrorCode genericErrorCode = GenericErrorCode.GEN_001;
-            Set constraintViolations = new HashSet<>();
-            constraintViolations.add(ex);
-            throw new ConstraintViolationException(genericErrorCode.getDefaultMessage(), constraintViolations);
-        }
+        return questionDao.updateQuestion(questionEntity);
     }
 
     /**
