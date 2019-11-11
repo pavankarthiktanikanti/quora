@@ -12,8 +12,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
+import javax.validation.ConstraintViolationException;
 import java.time.ZonedDateTime;
 import java.util.Base64;
+import java.util.HashSet;
+import java.util.Set;
 
 @Service
 public class UserBusinessService {
@@ -28,6 +31,7 @@ public class UserBusinessService {
      * Encrypts the user password before storing in the DB
      * Checks if the existing user is trying to signup again by matching username/email
      * If so, throws error message as already username taken or already registered
+     * It throws ConstraintViolationException if not null field are null
      *
      * @param user The user information to be saved as part of signup
      * @return The persisted user details with the id value generated
@@ -43,13 +47,20 @@ public class UserBusinessService {
             throw new SignUpRestrictedException("SGR-002", "This user has already been registered, try with any other emailId");
         }
         String password = user.getPassword();
-        if (password != null) {
-            String[] encryptedText = cryptographyProvider.encrypt(password);
-            user.setSalt(encryptedText[0]);
-            user.setPassword(encryptedText[1]);
-            user.setRole(QuoraUtil.NON_ADMIN_ROLE);
+        try {
+            if (password != null) {
+                String[] encryptedText = cryptographyProvider.encrypt(password);
+                user.setSalt(encryptedText[0]);
+                user.setPassword(encryptedText[1]);
+                user.setRole(QuoraUtil.NON_ADMIN_ROLE);
+            }
+            return userDao.createUser(user);
+        } catch (ConstraintViolationException ex) {
+            GenericErrorCode genericErrorCode = GenericErrorCode.GEN_001;
+            Set constraintViolations = new HashSet();
+            constraintViolations.add(ex);
+            throw new ConstraintViolationException(genericErrorCode.getDefaultMessage(), constraintViolations);
         }
-        return userDao.createUser(user);
     }
 
     /**
