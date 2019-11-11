@@ -1,6 +1,7 @@
 package com.upgrad.quora.api.exception;
 
 import com.upgrad.quora.api.model.ErrorResponse;
+import com.upgrad.quora.service.common.GenericErrorCode;
 import com.upgrad.quora.service.common.UnexpectedException;
 import com.upgrad.quora.service.exception.*;
 import org.springframework.http.HttpStatus;
@@ -8,6 +9,10 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.WebRequest;
+
+import javax.validation.ConstraintViolation;
+import javax.validation.ConstraintViolationException;
+import java.util.Set;
 
 @ControllerAdvice
 public class RestExceptionHandler {
@@ -134,4 +139,26 @@ public class RestExceptionHandler {
 
     }
 
+    /**
+     * Global Exception handler for ConstraintViolation Exceptions
+     * Handles the exception and sends back the user/client a user friendly message along with HTTP Status code
+     *
+     * @param ex      The ConstraintViolationException Failures occurred in the application
+     * @param request The web request information if any to be used while framing the response
+     * @return The Error Response consisting of the Http status code and an error message
+     */
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<ErrorResponse> constraintViolationException(ConstraintViolationException ex, WebRequest request) {
+        StringBuilder sb = new StringBuilder();
+        Set<ConstraintViolation<?>> violations = ex.getConstraintViolations();
+        if (violations != null) {
+            for (ConstraintViolation violation : violations) {
+                sb.append(violation.getPropertyPath()).append(" ").append(violation.getMessage()).append(" ");
+            }
+        }
+        return new ResponseEntity<ErrorResponse>(
+                new ErrorResponse().code(GenericErrorCode.GEN_001.getCode()).message(sb.toString()),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
 }
