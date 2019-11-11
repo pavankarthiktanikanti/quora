@@ -1,6 +1,5 @@
 package com.upgrad.quora.service.business;
 
-import com.upgrad.quora.service.common.GenericErrorCode;
 import com.upgrad.quora.service.dao.QuestionDao;
 import com.upgrad.quora.service.dao.UserDao;
 import com.upgrad.quora.service.entity.Question;
@@ -15,11 +14,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import javax.validation.ConstraintViolationException;
 import java.time.ZonedDateTime;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Service
 public class QuestionBusinessService {
@@ -36,7 +32,6 @@ public class QuestionBusinessService {
     /**
      * This method first validate the user calling the validate method is UserDao
      * than this method stores the question in database if user is validated successfully
-     * It throws ConstraintViolationException it question field is blank
      *
      * @param question      this is question object that needed to be stored in database
      * @param authorization holds the Bearer access token for authenticating the user
@@ -50,15 +45,9 @@ public class QuestionBusinessService {
                 "User is signed out.Sign in first to post a question");
         question.setDate(ZonedDateTime.now());
         question.setUser(userAuthEntity.getUser());
-        try {
-            Question createdQuestion = questionDao.createQuestion(question);
-            return createdQuestion;
-        } catch (ConstraintViolationException ex) {
-            GenericErrorCode genericErrorCode = GenericErrorCode.GEN_001;
-            Set constraintViolations = new HashSet<ConstraintViolationException>();
-            constraintViolations.add(ex);
-            throw new ConstraintViolationException(genericErrorCode.getDefaultMessage(), constraintViolations);
-        }
+        Question createdQuestion = questionDao.createQuestion(question);
+        return createdQuestion;
+
     }
 
     /**
@@ -78,7 +67,6 @@ public class QuestionBusinessService {
     /**
      * This method is used to edit question content :
      * checks for all the conditions and provides necessary response messages
-     * throws ConstraintViolationException if question content field is empty
      *
      * @param question      entity
      * @param questionId    for the question which needs to be edited
@@ -102,14 +90,7 @@ public class QuestionBusinessService {
             }
         }
         questionEntity.setContent(question.getContent());
-        try {
-            return questionDao.updateQuestion(questionEntity);
-        } catch (ConstraintViolationException ex) {
-            GenericErrorCode genericErrorCode = GenericErrorCode.GEN_001;
-            Set constraintViolations = new HashSet<>();
-            constraintViolations.add(ex);
-            throw new ConstraintViolationException(genericErrorCode.getDefaultMessage(), constraintViolations);
-        }
+        return questionDao.updateQuestion(questionEntity);
     }
 
     /**
